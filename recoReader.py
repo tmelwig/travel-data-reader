@@ -329,72 +329,61 @@ encoders = {
 if not os.path.exists("json"):
     os.makedirs("json")
 
+PIPE_PATH = "/tmp/reco_pipe"
+
+if not os.path.exists(PIPE_PATH):
+    os.mkfifo(PIPE_PATH)
+
 
 def process(args):
     """
-    Main process: reads, decodes, groups into search, and decorates
-    :param args: script arguments
-    :return searches: iterator on search objects (returned with yield)
+    Reads, decodes, groups, and decorates travel recommendations.
+    Now, writes JSON into a named pipe (FIFO) instead of just files.
     """
-    # start time
     start = time.time()
 
-    # loading currency rates
     rates = load_rates(args.rates_file)
-
-    logger.info("Decoding/encoding")
 
     cnt = Counter()
     recos = []
-    current_search_id = 0
+    current_search_id = None
 
-    # Ensure the pipe exists
-    pipe_path = "/tmp/reco_pipe"
-    if not os.path.exists(pipe_path):
-        os.mkfifo(pipe_path)
+    # Open FIFO in write mode
+    with open(PIPE_PATH, "w") as pipe:
+        # Open and read the input file
+        with (
+            gzip.open(args.input_file, "rt") if args.input_file != "-" else sys.stdin
+        ) as f:
+            for line in f:
+                cnt["reco_read"] += 1
+                reco = decode_line(line)
+                if reco:
+                    cnt["reco_decoded"] += 1
 
-    # open the input file (or stdin if there is none)
-    with gzip.open(args.input_file, "r") if args.input_file != "-" else sys.stdin as f:
-        for line in f:
-            cnt["reco_read"] += 1
-            reco = decode_line(line)
-            if reco:
-                cnt["reco_decoded"] += 1
-                # new search_id means new search: we can process the collected recos
-                if reco["search_id"] != current_search_id:
-                    current_search_id = reco["search_id"]
-                    if len(recos) > 0:
-                        if cnt["search_read"] % 1000 == 0:
-                            # log every 1000 searches to show the script is alive
-                            logger.info("Running: %s" % cnt)
-                        cnt["search_read"] += 1
-                        search = group_and_decorate(recos, rates)
-                        if search:
-                            cnt["search_encoded"] += 1
-                            # Save the search output to a file by search_id
-                            # with open(
-                            #     f"json/{search['search_id']}.json", "w"
-                            # ) as output_file:
-                            #     output_file.write(json.dumps(search))
-                            # Save the search output to a pipe by search_id
-                            with open("/tmp/reco_pipe", "w") as pipe:
-                                pipe.write(json.dumps(search) + "\n")
-                        recos = []
-                recos.append(reco)
+                    if reco["search_id"] != current_search_id:
+                        current_search_id = reco["search_id"]
+                        if len(recos) > 0:
+                            cnt["search_read"] += 1
+                            search = group_and_decorate(recos, rates)
+                            if search:
+                                cnt["search_encoded"] += 1
+                                json_data = json.dumps(search)
+                                pipe.write(json_data + "\n")  # Write JSON to FIFO
+                                pipe.flush()  # Ensure data is sent immediately
+                            recos = []
+                    recos.append(reco)
 
-    # Let's not forget the last search
-    if len(recos) > 0:
-        cnt["search_read"] += 1
-        search = group_and_decorate(recos, rates)
-        if search:
-            cnt["search_encoded"] += 1
-            with open(pipe_path, "w") as pipe:
-                pipe.write(json.dumps(search) + "\n")
+        # Process last search
+        if recos:
+            cnt["search_read"] += 1
+            search = group_and_decorate(recos, rates)
+            if search:
+                json_data = json.dumps(search)
+                pipe.write(json_data + "\n")
+                pipe.flush()
 
-    # end time
     end = time.time()
-
-    logger.info(f"Finished in {round(end - start, 2)} seconds: %s" % cnt)
+    logger.info(f"Finished in {round(end - start, 2)} seconds: {cnt}")
 
 
 if __name__ == "__main__":

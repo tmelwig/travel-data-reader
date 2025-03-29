@@ -1,30 +1,37 @@
 import os
 import json
 
-pipe_path = "/tmp/reco_pipe"
+PIPE_PATH = "/tmp/reco_pipe"
 
-# Ensure the pipe exists before reading
-if not os.path.exists(pipe_path):
-    raise FileNotFoundError(f"Pipe {pipe_path} not found.")
 
-# Open the pipe in read mode
-with open(pipe_path, "r") as pipe:
-    while True:
-        line = pipe.readline()  # Read each line (which is a JSON object)
-        if line:
-            try:
-                # Deserialize the JSON data
-                search = json.loads(line)
+def reco_from_pipe():
+    """
+    Reads JSON objects from the named pipe (FIFO) and processes them one by one.
+    """
+    print("Waiting for data from EC2...")
 
-                # Process the JSON (e.g., save it to a file based on search_id)
-                output_path = f"./json/{search['search_id']}.json"
-                os.makedirs("./json", exist_ok=True)  # Ensure directory exists
-                with open(output_path, "w") as json_file:
-                    json.dump(search, json_file, indent=2)
+    # Open the pipe in read mode
+    with open(PIPE_PATH, "r") as pipe:
+        while True:
+            line = pipe.readline()  # Read each line (which is a JSON object)
+            if line:
+                try:
+                    # Deserialize the JSON data
+                    search = json.loads(line)
 
-                print(f"Processed search_id: {search['search_id']}")
+                    # Process the JSON (e.g., save it to a file based on search_id)
+                    output_path = f"./json/{search['search_id']}.json"
+                    os.makedirs("./json", exist_ok=True)  # Ensure directory exists
+                    with open(output_path, "w") as json_file:
+                        json.dump(search, json_file, indent=2)
 
-            except json.JSONDecodeError as e:
-                print(f"Error decoding JSON: {e}")
-        else:
-            break
+                    print(f"Processed search_id: {search['search_id']}")
+
+                except json.JSONDecodeError as e:
+                    print(f"Error decoding JSON: {e}")
+            else:
+                break
+
+
+if __name__ == "__main__":
+    reco_from_pipe()
