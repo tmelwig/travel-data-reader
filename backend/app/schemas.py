@@ -1,17 +1,16 @@
 from pydantic import BaseModel
-from typing import Optional
-
+from datetime import date
 
 class DecoratedDataSampleSchema(BaseModel):
     search_id: str
-    ond: Optional[str]
-    advance_purchase: Optional[int]
-    request_dep_date: Optional[str]
-    request_return_date: Optional[str]
-    passengers_string: Optional[str]
-    trip_type: Optional[str]
-    price_eur: Optional[float]
-    main_airline: Optional[str]
+    ond: str
+    advance_purchase: int
+    request_dep_date: date
+    request_return_date: date | None = None
+    passengers_string: str
+    trip_type: str
+    price_eur: float
+    main_airline: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
