@@ -1,16 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query, Depends
 from fastapi.encoders import jsonable_encoder
-from .bdd.database import get_db
-from fastapi import Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from .bdd.models import DecoratedOnD
-from fastapi import Depends
+
+from app.bdd.database import get_db
+from app.bdd.models import DecoratedOnD
 
 app = FastAPI()
-
-db = next(get_db())
-
 
 @app.get("/")
 async def root():
