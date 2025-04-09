@@ -38,6 +38,10 @@ with col2:
     stay_duration_max = st.number_input("Durée max du séjour (jours)", min_value=0, step=1, format="%d")
     nb_connections = st.number_input("Nombre de correspondances exact", min_value=0, step=1, format="%d")
 
+# Variable pour stocker les données récupérées
+if 'data' not in st.session_state:
+    st.session_state.data = None
+
 # Bouton pour lancer la requête
 if st.button("Analyser les prix"):
     params = {
@@ -66,30 +70,46 @@ if st.button("Analyser les prix"):
     if nb_connections > 0:
         params["nb_connections"] = int(nb_connections)
 
-    # Appel de l'API
+    # Appel de l'API et stockage des données dans st.session_state
     with st.spinner("Chargement des résultats..."):
         response = requests.get(f"{API_URL}/price-evolution", params=params)
         if response.status_code == 200:
             data = response.json()
             if data:
-                df = pd.DataFrame(data)
-                st.dataframe(df)
-
-                # Affichage du graphique
-                st.markdown("### Prix médian par advance purchase et compagnie")
-                plt.figure(figsize=(12, 6))
-                sns.lineplot(
-                    data=df,
-                    x="advance_purchase",
-                    y="median_price_eur",
-                    hue="main_airline",
-                    marker="o"
-                )
-                plt.xlabel("Advance Purchase (jours)")
-                plt.ylabel("Prix médian (€)")
-                plt.title(f"{selected_ond} - {trip_type}")
-                st.pyplot(plt)
+                st.session_state.data = pd.DataFrame(data)  # Stocker les données
+                st.dataframe(st.session_state.data)
             else:
                 st.warning("Aucune donnée trouvée pour les filtres sélectionnés.")
         else:
             st.error(f"Erreur {response.status_code} : {response.text}")
+
+# Si les données ont été chargées, on peut afficher le graphique
+if st.session_state.data is not None:
+    st.markdown("### Prix médian par advance purchase et compagnie")
+    
+    # Sélecteur graphique pour exclure certaines compagnies
+    unique_airlines = st.session_state.data['main_airline'].unique()
+    excluded_airlines = st.multiselect("Sélectionner les compagnies à exclure", unique_airlines)
+
+    # Filtrer les données pour exclure les compagnies sélectionnées
+    filtered_df = st.session_state.data[~st.session_state.data['main_airline'].isin(excluded_airlines)]
+
+    # Tracer le graphique avec les compagnies restantes
+    plt.figure(figsize=(12, 6))
+
+    sns.lineplot(
+        data=filtered_df,
+        x="advance_purchase",
+        y="median_price_eur",
+        hue="main_airline",
+        marker="o"
+    )
+
+    # Inverser l'axe des jours
+    plt.gca().invert_xaxis()
+
+    plt.xlabel("Advance Purchase (jours)")
+    plt.ylabel("Prix médian (€)")
+    plt.title(f"{selected_ond} - {trip_type}")
+    
+    st.pyplot(plt)
