@@ -12,9 +12,10 @@ app = FastAPI()
 async def root():
     return {"message": "Hello World"}
 
+
 @app.get("/test-db")
 def test_db(db: Session = Depends(get_db)):
-    first_entry = db.query(DecoratedOnD).first()
+    first_entry = db.query(DecoratedDataSample).first()
     if not first_entry:
         return {"status": "OK", "message": "La table est vide"}
     return {"status": "OK", "data": str(first_entry)}
