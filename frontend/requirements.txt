@@ -1,3 +1,5 @@
+streamlit
+requests
 pandas
 seaborn
-streamlit
+matplotlib

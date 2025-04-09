@@ -87,14 +87,16 @@ if st.button("Analyser les prix"):
 if st.session_state.data is not None:
     st.markdown("### Prix médian par advance purchase et compagnie")
     
-    # Sélecteur graphique pour exclure certaines compagnies
+    # Sélecteur graphique pour choisir les compagnies à afficher
     unique_airlines = st.session_state.data['main_airline'].unique()
-    excluded_airlines = st.multiselect("Sélectionner les compagnies à exclure", unique_airlines)
+    
+    # Par défaut, afficher toutes les compagnies
+    all_airlines_selected = st.multiselect("Sélectionner les compagnies à afficher", unique_airlines, default=unique_airlines)
 
-    # Filtrer les données pour exclure les compagnies sélectionnées
-    filtered_df = st.session_state.data[~st.session_state.data['main_airline'].isin(excluded_airlines)]
+    # Filtrer les données pour afficher uniquement les compagnies sélectionnées
+    filtered_df = st.session_state.data[st.session_state.data['main_airline'].isin(all_airlines_selected)]
 
-    # Tracer le graphique avec les compagnies restantes
+    # Tracer le graphique avec les compagnies sélectionnées
     plt.figure(figsize=(12, 6))
 
     sns.lineplot(
