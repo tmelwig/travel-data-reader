@@ -66,9 +66,9 @@ def price_evolution(
     if request_dep_date_max:
         query = query.filter(DecoratedDataSample.request_dep_date <= request_dep_date_max)
     if stay_duration_min and stay_duration_max:
-        # On estime la durée via request_return_date - request_dep_date
+        # Calcul de la durée en jours entre les dates de départ et de retour
         query = query.filter(
-            func.date_part('day', DecoratedDataSample.request_return_date - DecoratedDataSample.request_dep_date)
+            (DecoratedDataSample.request_return_date - DecoratedDataSample.request_dep_date).cast(Integer)
             .between(stay_duration_min, stay_duration_max)
         )
     if nb_connections is not None:
