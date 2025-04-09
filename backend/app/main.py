@@ -24,6 +24,12 @@ def test_db(db: Session = Depends(get_db)):
         return {"status": "OK", "message": "La table est vide"}
     return first_entry
 
+@app.get("/ond")
+def get_all_ond(db: Session = Depends(get_db)):
+    onds = db.query(DecoratedDataSample.ond).distinct().all()
+    ond_list = sorted([ond[0] for ond in onds if ond[0] is not None])
+    return {"ond": ond_list}
+
 @app.get("/price-evolution", response_model=List[PriceEvolutionResponse])
 def price_evolution(
     ond: str = Query(...),
