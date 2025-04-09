@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=database-decorated.c7k8uyae6cbf.eu-north-1.rds.amazonaws.com
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=gd4juzC04e9F1E0lkJdz
+      - DB_NAME=flight_data_decorated
