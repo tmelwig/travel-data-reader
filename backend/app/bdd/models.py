@@ -6,7 +6,7 @@ class DecoratedDataSample(Base):
     __table_args__ = {"extend_existing": True}
 
     search_id = Column(String, primary_key=True)
-    OnD = Column(String)
+    ond = Column("OnD", String)
     advance_purchase = Column(Integer)
     request_dep_date = Column(String)
     request_return_date = Column(String)
