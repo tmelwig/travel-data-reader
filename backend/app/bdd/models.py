@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, Date
+from app.bdd.database import Base
 
 class DecoratedDataSample(Base):
     __tablename__ = "decorated_data_sample"

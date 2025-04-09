@@ -14,3 +14,9 @@ class DecoratedDataSampleSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+class PriceEvolutionResponse(BaseModel):
+    main_airline: str
+    advance_purchase: int
+    median_price_eur: float
+    recommendation_count: int
