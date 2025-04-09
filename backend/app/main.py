@@ -4,7 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.bdd.database import get_db
-from app.bdd.models import DecoratedOnD
+from app.bdd.models import DecoratedDataSample
 
 app = FastAPI()
 
